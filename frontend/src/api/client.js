@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://fifa-transfer-predictor.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
