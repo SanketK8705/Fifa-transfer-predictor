@@ -1,0 +1,65 @@
+.dock-outer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dock-panel {
+  position: relative;
+  bottom: 1rem;
+  display: flex;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 1rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  padding: 0 0.5rem 0.5rem;
+  pointer-events: auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background-color: var(--card2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  outline: none;
+  color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.dock-item:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-label {
+  position: absolute;
+  top: -1.6rem;
+  left: 50%;
+  width: fit-content;
+  white-space: pre;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #fff;
+  transform: translateX(-50%);
+}

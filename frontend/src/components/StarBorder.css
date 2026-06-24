@@ -1,0 +1,47 @@
+.star-border-container {
+  display: inline-block;
+  position: relative;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.border-gradient-bottom {
+  position: absolute;
+  width: 300%;
+  height: 50%;
+  bottom: -11px;
+  right: -250%;
+  border-radius: 50%;
+  animation: star-spin-btm linear infinite alternate;
+  z-index: 0;
+}
+
+.border-gradient-top {
+  position: absolute;
+  width: 300%;
+  height: 50%;
+  top: -10px;
+  left: -250%;
+  border-radius: 50%;
+  animation: star-spin-top linear infinite alternate;
+  z-index: 0;
+}
+
+.inner-content {
+  position: relative;
+  z-index: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 14px 24px;
+}
+
+@keyframes star-spin-btm {
+  0% { transform: translateX(-10%); }
+  100% { transform: translateX(10%); }
+}
+
+@keyframes star-spin-top {
+  0% { transform: translateX(10%); }
+  100% { transform: translateX(-10%); }
+}
