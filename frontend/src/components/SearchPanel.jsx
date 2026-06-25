@@ -5,7 +5,7 @@ import Counter from './Counter.jsx';
 import { searchPlayers, predictPlayer } from '../api/client.js';
 import './SearchPanel.css';
 
-export default function SearchPanel({ sessionId }) {
+export default function SearchPanel({ sessionId, onPredictSuccess }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -13,6 +13,14 @@ export default function SearchPanel({ sessionId }) {
   const [predicting, setPredicting] = useState(false);
   const [error, setError] = useState(null);
   const debounceRef = useRef(null);
+  const resultRef = useRef(null);
+
+  // Clear result when component unmounts (tab switch)
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -37,30 +45,41 @@ export default function SearchPanel({ sessionId }) {
     return () => clearTimeout(debounceRef.current);
   }, [query]);
 
+  const clearSearch = () => {
+    setQuery('');
+    setResults([]);
+    setSelected(null);
+    setError(null);
+  };
+
   const handlePredict = async (player) => {
     setSelected(player);
     setPredicting(true);
     setError(null);
     try {
-      // search results only give summary stats — backend predict needs full attribute set,
-      // so we estimate remaining attributes from overall rating as a reasonable baseline
-      const baseline = player.overall - 5;
       const payload = {
-        player_name: player.name,
-        age: player.age,
-        overall: player.overall,
-        potential: player.overall + 3,
-        wage: player.value * 1000,
-        position: player.position,
-        reputation: 2,
-        weakfoot: 3,
-        skillmoves: 3,
-        crossing: baseline, finishing: baseline, heading: baseline, passing: baseline,
-        dribbling: baseline, ballcontrol: baseline, acceleration: baseline, sprintspeed: baseline,
-        reactions: baseline, shotpower: baseline, stamina: baseline, strength: baseline, vision: baseline,
-      };
+  player_name: player.name,
+  age: player.age,
+  overall: player.overall,
+  potential: player.potential || player.overall + 2,
+  wage: player.wage || 50000,
+  position: player.position,
+  reputation: player.reputation || 2,
+  weakfoot: player.weakfoot || 3,
+  skillmoves: player.skillmoves || 3,
+  crossing: player.crossing, finishing: player.finishing,
+  heading: player.heading, passing: player.passing,
+  dribbling: player.dribbling, ballcontrol: player.ballcontrol,
+  acceleration: player.acceleration, sprintspeed: player.sprintspeed,
+  reactions: player.reactions, shotpower: player.shotpower,
+  stamina: player.stamina, strength: player.strength, vision: player.vision,
+};
       const data = await predictPlayer(payload, sessionId);
       setSelected({ ...player, prediction: data });
+      onPredictSuccess?.();
+      requestAnimationFrame(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     } catch (err) {
       setError(err?.response?.data?.error || 'Could not predict this player.');
     } finally {
@@ -83,7 +102,7 @@ export default function SearchPanel({ sessionId }) {
           <button
             type="button"
             className="search-clear-btn"
-            onClick={() => { setQuery(''); setResults([]); }}
+            onClick={clearSearch}
             aria-label="Clear search"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -123,28 +142,27 @@ export default function SearchPanel({ sessionId }) {
       {predicting && <div className="loading-banner">Calculating prediction…</div>}
 
       {selected?.prediction && (
-        <BorderGlow
-          className="result-glow"
-          colors={['#00ff87', '#00cc6a', '#00ff87']}
-          backgroundColor="#0d1117"
-          borderRadius={18}
-        >
-          <div className="result-content">
-            <div className="result-label">{selected.name} — Predicted Value</div>
-            <div className="result-value">
-              <span className="result-currency">€</span>
-              <Counter value={selected.prediction.value_m} fontSize={48} gradientHeight={6} />
-              <span className="result-suffix">M</span>
+        <div ref={resultRef}>
+          <BorderGlow
+            className="result-glow"
+            colors={['#00ff87', '#00cc6a', '#00ff87']}
+            backgroundColor="#0d1117"
+            borderRadius={18}
+          >
+            <div className="result-content">
+              <div className="result-label">{selected.name} — Predicted Value</div>
+              <div className="result-value">
+                <span className="result-currency">€</span>
+                <Counter value={selected.prediction.value_m} fontSize={48} gradientHeight={6} />
+                <span className="result-suffix">M</span>
+              </div>
+              <div className={`result-category cat-${selected.prediction.category?.toLowerCase()}`}>
+                {selected.prediction.category} Tier
+              </div>
+
             </div>
-            <div className={`result-category cat-${selected.prediction.category?.toLowerCase()}`}>
-              {selected.prediction.category} Tier
-            </div>
-            <p className="estimate-note">
-              Note: detailed attributes estimated from overall rating since search results
-              don't include full stat breakdowns. For precise predictions, use Custom Player builder.
-            </p>
-          </div>
-        </BorderGlow>
+          </BorderGlow>
+        </div>
       )}
     </div>
   );

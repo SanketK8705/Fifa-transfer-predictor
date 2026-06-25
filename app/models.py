@@ -16,6 +16,7 @@ class Prediction(db.Model):
     predicted_value = db.Column(db.Float, nullable=False)
     category    = db.Column(db.String(20), nullable=False)
     model_used  = db.Column(db.String(30), default='gradient_boosting')
+    source      = db.Column(db.String(20), default='predict')  # 'predict' | 'search' | 'compare'
     created_at  = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -31,5 +32,6 @@ class Prediction(db.Model):
             'predicted_value': round(self.predicted_value / 1e6, 2),
             'category':        self.category,
             'model_used':      self.model_used,
+            'source':          self.source or 'predict',
             'created_at':      self.created_at.isoformat(),
         }

@@ -12,6 +12,7 @@ import PredictPanel from './components/PredictPanel.jsx';
 import SearchPanel from './components/SearchPanel.jsx';
 import AnalysisPanel from './components/AnalysisPanel.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
+import ComparePanel from './components/ComparePanel.jsx';
 import { getHistory } from './api/client.js';
 import './App.css';
 
@@ -46,6 +47,11 @@ const HistoryIcon = () => (
     <path d="M12 7v5l4 2" />
   </svg>
 );
+const CompareIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
+  </svg>
+);
 
 const CLUB_BADGES = [
   { node: <span className="club-badge">Premier League</span> },
@@ -60,26 +66,24 @@ export default function App() {
   const [activeTab, setActiveTabRaw] = useState('predict');
 
   const setActiveTab = (tab) => {
-    
+    if (tab === activeTab) return;
     setActiveTabRaw(tab);
-    // only Analysis needs the resize nudge (Recharts/FlowingMenu measuring
-    // 0-width while hidden) - firing it on every tab switch was forcing an
-    // expensive Recharts recompute even when navigating Predict/Search/History,
-    // which is what caused the stutter on every switch
     if (tab === 'analysis') {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
     }
   };
+
   const sessionId = getSessionId();
   const [history, setHistory] = useState(null);
   const loadHistory = useCallback(() => {
-  getHistory(sessionId).then(setHistory).catch(() => {});
+    getHistory(sessionId).then(setHistory).catch(() => {});
   }, [sessionId]);
-  useEffect(() => { loadHistory(); }, [loadHistory]); 
+  useEffect(() => { loadHistory(); }, [loadHistory]);
 
   const dockItems = [
     { icon: <PredictIcon />, label: 'Predict', onClick: () => setActiveTab('predict') },
     { icon: <SearchIcon />, label: 'Search', onClick: () => setActiveTab('search') },
+    { icon: <CompareIcon />, label: 'Compare', onClick: () => setActiveTab('compare') },
     { icon: <ChartIcon />, label: 'Analysis', onClick: () => setActiveTab('analysis') },
     { icon: <HistoryIcon />, label: 'History', onClick: () => setActiveTab('history') },
   ];
@@ -87,6 +91,7 @@ export default function App() {
   const staggeredItems = [
     { label: 'Predict', ariaLabel: 'Go to Predict tab', onClick: () => setActiveTab('predict') },
     { label: 'Search', ariaLabel: 'Go to Search tab', onClick: () => setActiveTab('search') },
+    { label: 'Compare', ariaLabel: 'Go to Compare tab', onClick: () => setActiveTab('compare') },
     { label: 'Analysis', ariaLabel: 'Go to Analysis tab', onClick: () => setActiveTab('analysis') },
     { label: 'History', ariaLabel: 'Go to History tab', onClick: () => setActiveTab('history') },
   ];
@@ -157,7 +162,12 @@ export default function App() {
 
           <div className={`tab-panel ${activeTab === 'search' ? 'tab-panel--active' : ''}`}>
             <ScrollFloat containerClassName="section-header">Search Players</ScrollFloat>
-            <SearchPanel sessionId={sessionId} />
+            <SearchPanel sessionId={sessionId} onPredictSuccess={loadHistory} />
+          </div>
+
+          <div className={`tab-panel ${activeTab === 'compare' ? 'tab-panel--active' : ''}`}>
+            <ScrollFloat containerClassName="section-header">Compare Players</ScrollFloat>
+            <ComparePanel sessionId={sessionId} onPredictSuccess={loadHistory} />
           </div>
 
           <div className={`tab-panel ${activeTab === 'analysis' ? 'tab-panel--active' : ''}`}>

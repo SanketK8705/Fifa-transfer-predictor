@@ -1,8 +1,11 @@
+from flask_sqlalchemy import query
+from fontTools.unicodedata import name
 import pandas as pd
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
+from pyparsing import results
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -71,7 +74,6 @@ class MLEngine:
         X_tr_sc = self.scaler.fit_transform(X_train)
         X_te_sc = self.scaler.transform(X_test)
 
-        # regression
         print("training models...")
         self.lr = LinearRegression()
         self.lr.fit(X_tr_sc, y_train)
@@ -92,7 +94,6 @@ class MLEngine:
             'gb': {'r2': round(r2_score(y_test,p_gb)*100,2), 'mae': round(mean_absolute_error(y_test,p_gb)/1e6,2)},
         }
 
-        # PCA
         pca_full = PCA(n_components=21)
         pca_full.fit(X_tr_sc)
         cumvar = np.cumsum(pca_full.explained_variance_ratio_)
@@ -107,7 +108,6 @@ class MLEngine:
             'cumulative':         [round(float(c)*100,2) for c in cumvar],
         }
 
-        # classification
         def to_cat(v):
             if v < 5e6:   return 'Low'
             if v < 20e6:  return 'Medium'
@@ -149,13 +149,43 @@ class MLEngine:
         self.confusion_matrix = confusion_matrix(y_te_enc, p_clf_rf).tolist()
         self.cm_labels = list(self.le_cat.classes_)
 
-        # store for chart data
         self.X_train = X_train
         self.y_train = y_train
         self.X_tr_sc = X_tr_sc
 
         self._load_famous_players()
         print("all models ready.")
+    
+    def _row_to_full_player(self, row, name_override=None):
+        pos = str(row.get('Position','ST')).strip()
+        if pos not in self.le.classes_: pos = 'ST'
+        name = name_override or str(row.get('Name',''))
+        return {
+        'name': name, 'age': self._safe_int(row.get('Age'), 25),
+        'overall': self._safe_int(row.get('Overall'), 85),
+        'potential': self._safe_int(row.get('Potential'), 85),
+        'wage': self._safe_float(row.get('Wage'), 100000),
+        'reputation': self._safe_int(row.get('International Reputation'), 3),
+        'weakfoot': self._safe_int(row.get('Weak Foot'), 3),
+        'skillmoves': self._safe_int(row.get('Skill Moves'), 3),
+        'position': pos,
+        'crossing': self._safe_int(row.get('Crossing'), 70),
+        'finishing': self._safe_int(row.get('Finishing'), 70),
+        'heading': self._safe_int(row.get('HeadingAccuracy'), 70),
+        'passing': self._safe_int(row.get('ShortPassing'), 70),
+        'dribbling': self._safe_int(row.get('Dribbling'), 70),
+        'ballcontrol': self._safe_int(row.get('BallControl'), 70),
+        'acceleration': self._safe_int(row.get('Acceleration'), 70),
+        'sprintspeed': self._safe_int(row.get('SprintSpeed'), 70),
+        'reactions': self._safe_int(row.get('Reactions'), 70),
+        'shotpower': self._safe_int(row.get('ShotPower'), 70),
+        'stamina': self._safe_int(row.get('Stamina'), 70),
+        'strength': self._safe_int(row.get('Strength'), 70),
+        'vision': self._safe_int(row.get('Vision'), 70),
+        'actual_value': self._safe_float(row.get('Value'), 0),
+        'club': str(row.get('Club','Unknown')),
+        'nationality': str(row.get('Nationality','Unknown')),
+    }
 
     def _load_famous_players(self):
         names = [
@@ -171,36 +201,7 @@ class MLEngine:
                 row = self.df_raw[self.df_raw['Name'].str.contains(
                     name.split('.')[-1].strip(), na=False)]
             if row.empty: continue
-            row = row.iloc[0]
-            pos = str(row.get('Position','ST')).strip()
-            if pos not in self.le.classes_: pos = 'ST'
-            result.append({
-                'name':         name,
-                'age':          self._safe_int(row.get('Age'), 25),
-                'overall':      self._safe_int(row.get('Overall'), 85),
-                'potential':    self._safe_int(row.get('Potential'), 85),
-                'wage':         self._safe_float(row.get('Wage'), 100000),
-                'reputation':   self._safe_int(row.get('International Reputation'), 3),
-                'weakfoot':     self._safe_int(row.get('Weak Foot'), 3),
-                'skillmoves':   self._safe_int(row.get('Skill Moves'), 3),
-                'position':     pos,
-                'crossing':     self._safe_int(row.get('Crossing'), 70),
-                'finishing':    self._safe_int(row.get('Finishing'), 70),
-                'heading':      self._safe_int(row.get('HeadingAccuracy'), 70),
-                'passing':      self._safe_int(row.get('ShortPassing'), 70),
-                'dribbling':    self._safe_int(row.get('Dribbling'), 70),
-                'ballcontrol':  self._safe_int(row.get('BallControl'), 70),
-                'acceleration': self._safe_int(row.get('Acceleration'), 70),
-                'sprintspeed':  self._safe_int(row.get('SprintSpeed'), 70),
-                'reactions':    self._safe_int(row.get('Reactions'), 70),
-                'shotpower':    self._safe_int(row.get('ShotPower'), 70),
-                'stamina':      self._safe_int(row.get('Stamina'), 70),
-                'strength':     self._safe_int(row.get('Strength'), 70),
-                'vision':       self._safe_int(row.get('Vision'), 70),
-                'actual_value': self._safe_float(row.get('Value'), 0),
-                'club':         str(row.get('Club','Unknown')),
-                'nationality':  str(row.get('Nationality','Unknown')),
-            })
+            result.append(self._row_to_full_player(row.iloc[0], name_override=name))
         self.famous_players = result
 
     def predict(self, inp: dict) -> dict:
@@ -228,20 +229,17 @@ class MLEngine:
                                  'ShortPassing','Reactions','Vision',
                                  'Stamina','Strength']].dropna()
 
-        # scatter: overall vs value (sample 500)
         sample = df_ref.sample(500, random_state=42)
         scatter_overall = {
             'all':    {'x': sample['Overall'].tolist(), 'y': (sample['Value']/1e6).round(2).tolist()},
             'player': {'x': overall, 'y': round(pred_m, 2), 'name': player_name},
         }
 
-        # scatter: age vs value
         scatter_age = {
             'all':    {'x': sample['Age'].tolist(), 'y': (sample['Value']/1e6).round(2).tolist()},
             'player': {'x': age, 'y': round(pred_m, 2), 'name': player_name},
         }
 
-        # similar players bar
         similar = df_ref[
             (df_ref['Overall'] >= overall-3) &
             (df_ref['Overall'] <= overall+3)
@@ -251,7 +249,6 @@ class MLEngine:
             'values': (similar['Value']/1e6).round(2).tolist() + [round(pred_m,2)],
         }
 
-        # radar
         radar = {
             'labels': ['Dribbling','Sprint Speed','Finishing','Passing','Reactions','Vision'],
             'values': [
@@ -261,7 +258,6 @@ class MLEngine:
             ],
         }
 
-        # 3 model comparison
         input_df = pd.DataFrame(inp, index=[0])[self.features]
         input_sc = self.scaler.transform(input_df)
         model_compare = {
@@ -273,7 +269,6 @@ class MLEngine:
             ],
         }
 
-        # feature importance
         fi = sorted(zip(self.features, self.gb.feature_importances_),
                     key=lambda x: x[1], reverse=True)[:10]
         feature_importance = {
@@ -281,7 +276,6 @@ class MLEngine:
             'values':   [round(float(v),4) for _,v in fi],
         }
 
-        # value distribution (histogram buckets)
         vals = self.df_ref[self.df_ref['Value'] < 50e6]['Value'] / 1e6
         counts, edges = np.histogram(vals, bins=30)
         value_dist = {
@@ -291,7 +285,6 @@ class MLEngine:
             'player_name':  player_name,
         }
 
-        # position avg comparison
         pos_enc  = float(inp['Position'])
         pos_rows = self.df_ref.copy()
         pos_rows['Position_enc'] = self.le.transform(
@@ -319,7 +312,6 @@ class MLEngine:
         }
 
     def get_analysis_data(self) -> dict:
-        # PCA 2D scatter (sample 800)
         from sklearn.decomposition import PCA as _PCA
         pca2 = _PCA(n_components=2)
         X_2d = pca2.fit_transform(self.X_tr_sc[:800])
@@ -338,25 +330,15 @@ class MLEngine:
             'reg_scores':     self.reg_scores,
         }
 
-    def search_players(self, query: str, limit: int = 10) -> list:
+    def search_players(self, query: str, limit: int = 20) -> list:
+        """Returns full player stats — same shape as famous_players."""
         q = query.strip().lower()
         if not q: return []
         mask = self.df_raw['Name'].str.lower().str.contains(q, na=False)
         rows = self.df_raw[mask].head(limit)
-        result = []
-        for _, row in rows.iterrows():
-            pos = str(row.get('Position','ST')).strip()
-            if pos not in self.le.classes_: pos = 'ST'
-            result.append({
-                'name':        str(row.get('Name','')),
-                'club':        str(row.get('Club','Unknown')),
-                'nationality': str(row.get('Nationality','Unknown')),
-                'overall':     self._safe_int(row.get('Overall'), 70),
-                'position':    pos,
-                'age':         self._safe_int(row.get('Age'), 25),
-                'value':       self._safe_float(row.get('Value'), 0) / 1e6,
-            })
-        return result
+        results = [self._row_to_full_player(row) for _, row in rows.iterrows()]
+        print("SEARCH RESULT SAMPLE:", results[0] if results else "empty")
+        return results
 
 
 # singleton — loaded once, shared across all requests

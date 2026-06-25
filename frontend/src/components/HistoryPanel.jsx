@@ -61,6 +61,7 @@ export default function HistoryPanel({ sessionId, history, onRefresh }) {
       <div className="history-item-main">
         <div className="history-item-name">{h.player_name}</div>
         <div className="history-item-meta">
+          {h.source === 'compare' && <span style={{ color: '#4dd2ff', fontWeight: 600, marginRight: 6 }}>[Compare]</span>}
           {h.position} · OVR {h.overall} · Age {h.age} · {formatDate(h.created_at)}
         </div>
       </div>

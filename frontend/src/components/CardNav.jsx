@@ -18,9 +18,16 @@ const TABS = [
     description: 'Look up any player from the dataset',
   },
   {
+    id: 'compare',
+    label: 'Compare',
+    bgColor: '#0d1117',
+    textColor: '#fff',
+    description: 'Head-to-head player stat & value comparison',
+  },
+  {
     id: 'analysis',
     label: 'Analysis',
-    bgColor: '#0d1117',
+    bgColor: '#111827',
     textColor: '#fff',
     description: 'PCA, classification & regression insights',
   },
@@ -29,14 +36,14 @@ const TABS = [
 const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const isClosingRef = useRef(false); // track mid-close to block resize kill
+  const isClosingRef = useRef(false);
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
 
   const calculateHeight = () => {
     const navEl = navRef.current;
-    if (!navEl) return 220;
+    if (!navEl) return 280;
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
     if (isMobile) {
       const contentEl = navEl.querySelector('.card-nav-content');
@@ -64,7 +71,7 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
         return topBar + contentHeight + padding;
       }
     }
-    return 220;
+    return 280;
   };
 
   const createTimeline = () => {
@@ -93,8 +100,6 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
   useLayoutEffect(() => {
     const handleResize = () => {
       if (!tlRef.current) return;
-      // Don't kill tl while closing — it would cancel onReverseComplete
-      // and leave isExpanded=true, causing menu to get stuck open
       if (isClosingRef.current) return;
       if (isExpanded) {
         const newHeight = calculateHeight();
@@ -125,7 +130,7 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
       setIsExpanded(true);
       tl.play(0);
     } else {
-      isClosingRef.current = true; // block resize from killing tl mid-reverse
+      isClosingRef.current = true;
       setIsOpen(false);
       tl.eventCallback('onReverseComplete', () => {
         setIsExpanded(false);
