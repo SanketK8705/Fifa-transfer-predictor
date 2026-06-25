@@ -26,20 +26,18 @@
 
 .search-clear-btn {
   position: absolute;
-  right: 8px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: var(--card2);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  padding: 0;
+  line-height: 1;
 }
 
 .search-clear-btn:hover {

@@ -143,6 +143,18 @@
   gap: 8px;
 }
 
+.picker-custom > div {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.picker-custom > div .text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 32px;
+}
+
 .custom-sliders-grid {
   display: flex;
   flex-direction: column;
@@ -344,9 +356,9 @@
   letter-spacing: 0.06em;
 }
 
-.stat-table-header span:first-child { text-align: left; }
+.stat-table-header span:first-child { text-align: center; }
 .stat-table-header span:nth-child(2) { text-align: center; color: #666; }
-.stat-table-header span:last-child { text-align: right; }
+.stat-table-header span:last-child { text-align: center; }
 
 .stat-table-row {
   display: grid;
@@ -363,14 +375,14 @@
 }
 
 .stat-val {
-  font-size: 14px;
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 6px;
 }
 
 .stat-val.right {
-  justify-content: flex-end;
+  justify-content: center;
   flex-direction: row-reverse;
 }
 

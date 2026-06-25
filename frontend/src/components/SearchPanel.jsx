@@ -142,28 +142,40 @@ export default function SearchPanel({ sessionId, onPredictSuccess }) {
       {predicting && <div className="loading-banner">Calculating prediction…</div>}
 
       {selected?.prediction && (
-        <div ref={resultRef}>
-          <BorderGlow
-            className="result-glow"
-            colors={['#00ff87', '#00cc6a', '#00ff87']}
-            backgroundColor="#0d1117"
-            borderRadius={18}
-          >
-            <div className="result-content">
-              <div className="result-label">{selected.name} — Predicted Value</div>
-              <div className="result-value">
-                <span className="result-currency">€</span>
-                <Counter value={selected.prediction.value_m} fontSize={48} gradientHeight={6} />
-                <span className="result-suffix">M</span>
-              </div>
-              <div className={`result-category cat-${selected.prediction.category?.toLowerCase()}`}>
-                {selected.prediction.category} Tier
-              </div>
-
-            </div>
-          </BorderGlow>
+  <div ref={resultRef}>
+    <BorderGlow
+      className="result-glow"
+      colors={['#00ff87', '#00cc6a', '#00ff87']}
+      backgroundColor="#0d1117"
+      borderRadius={18}
+    >
+      <div className="result-content">
+        <div className="result-label">{selected.name} — Predicted Value</div>
+        <div className="result-value">
+          <span className="result-currency">€</span>
+          <Counter value={selected.prediction.value_m} fontSize={48} gradientHeight={6} />
+          <span className="result-suffix">M</span>
         </div>
-      )}
+        <div className={`result-category cat-${selected.prediction.category?.toLowerCase()}`}>
+          {selected.prediction.category} Tier
+        </div>
+        <div className="model-compare-cards">
+          {['lr', 'rf', 'gb'].map(key => (
+            <SpotlightCard key={key} className="model-card" spotlightColor="rgba(0,255,135,0.12)">
+              <div className="model-card-label">
+                {key === 'lr' ? 'Linear Regression' : key === 'rf' ? 'Random Forest' : 'Gradient Boosting'}
+              </div>
+              <div className="model-card-value">€{selected.prediction.model_predictions[key]}M</div>
+            </SpotlightCard>
+          ))}
+        </div>
+        <p className="estimate-note">
+          Predicted using real player attributes from the FIFA dataset.
+        </p>
+      </div>
+    </BorderGlow>
+  </div>
+)}
     </div>
   );
 }
