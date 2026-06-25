@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Ferrofluid from './components/Ferrofluid.jsx';
 import CardNav from './components/CardNav.jsx';
 import StaggeredMenu from './components/StaggeredMenu.jsx';
@@ -12,6 +12,7 @@ import PredictPanel from './components/PredictPanel.jsx';
 import SearchPanel from './components/SearchPanel.jsx';
 import AnalysisPanel from './components/AnalysisPanel.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
+import { getHistory } from './api/client.js';
 import './App.css';
 
 function getSessionId() {
@@ -59,16 +60,22 @@ export default function App() {
   const [activeTab, setActiveTabRaw] = useState('predict');
 
   const setActiveTab = (tab) => {
+    
     setActiveTabRaw(tab);
     // only Analysis needs the resize nudge (Recharts/FlowingMenu measuring
     // 0-width while hidden) - firing it on every tab switch was forcing an
     // expensive Recharts recompute even when navigating Predict/Search/History,
     // which is what caused the stutter on every switch
     if (tab === 'analysis') {
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 500);
     }
   };
   const sessionId = getSessionId();
+  const [history, setHistory] = useState(null);
+  const loadHistory = useCallback(() => {
+  getHistory(sessionId).then(setHistory).catch(() => {});
+  }, [sessionId]);
+  useEffect(() => { loadHistory(); }, [loadHistory]); 
 
   const dockItems = [
     { icon: <PredictIcon />, label: 'Predict', onClick: () => setActiveTab('predict') },
@@ -145,7 +152,7 @@ export default function App() {
         <main className="app-main">
           <div className={`tab-panel ${activeTab === 'predict' ? 'tab-panel--active' : ''}`}>
             <ScrollFloat containerClassName="section-header">Make a Prediction</ScrollFloat>
-            <PredictPanel sessionId={sessionId} />
+            <PredictPanel sessionId={sessionId} onPredictSuccess={loadHistory} />
           </div>
 
           <div className={`tab-panel ${activeTab === 'search' ? 'tab-panel--active' : ''}`}>
@@ -160,7 +167,7 @@ export default function App() {
 
           <div className={`tab-panel ${activeTab === 'history' ? 'tab-panel--active' : ''}`}>
             <ScrollFloat containerClassName="section-header">Your Predictions</ScrollFloat>
-            <HistoryPanel sessionId={sessionId} />
+            <HistoryPanel sessionId={sessionId} history={history} onRefresh={loadHistory} />
           </div>
         </main>
 

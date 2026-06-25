@@ -29,6 +29,7 @@ const TABS = [
 const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const isClosingRef = useRef(false); // track mid-close to block resize kill
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
@@ -92,6 +93,9 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
   useLayoutEffect(() => {
     const handleResize = () => {
       if (!tlRef.current) return;
+      // Don't kill tl while closing — it would cancel onReverseComplete
+      // and leave isExpanded=true, causing menu to get stuck open
+      if (isClosingRef.current) return;
       if (isExpanded) {
         const newHeight = calculateHeight();
         gsap.set(navRef.current, { height: newHeight });
@@ -116,12 +120,17 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
     const tl = tlRef.current;
     if (!tl) return;
     if (!isExpanded) {
+      isClosingRef.current = false;
       setIsOpen(true);
       setIsExpanded(true);
       tl.play(0);
     } else {
+      isClosingRef.current = true; // block resize from killing tl mid-reverse
       setIsOpen(false);
-      tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
+      tl.eventCallback('onReverseComplete', () => {
+        setIsExpanded(false);
+        isClosingRef.current = false;
+      });
       tl.reverse();
     }
   };
@@ -132,7 +141,7 @@ const CardNav = ({ activeTab, onTabChange, ease = 'power3.out' }) => {
 
   const selectTab = id => {
     onTabChange(id);
-    toggleMenu();
+    if (isExpanded) toggleMenu();
   };
 
   return (

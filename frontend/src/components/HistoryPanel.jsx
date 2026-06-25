@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
 import AnimatedList from './AnimatedList.jsx';
 import GlassIcons from './GlassIcons.jsx';
-import { getHistory, deleteHistoryItem, clearHistory } from '../api/client.js';
+import { deleteHistoryItem, clearHistory } from '../api/client.js';
 import './HistoryPanel.css';
 
 const TrashIcon = () => (
@@ -24,41 +23,28 @@ function formatDate(iso) {
     ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function HistoryPanel({ sessionId }) {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadHistory = useCallback(() => {
-    setLoading(true);
-    getHistory(sessionId)
-      .then(setHistory)
-      .finally(() => setLoading(false));
-  }, [sessionId]);
-
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
-
+export default function HistoryPanel({ sessionId, history, onRefresh }) {
   const handleDelete = async (id) => {
-    setHistory(prev => prev.filter(h => h.id !== id));
+    onRefresh(); // optimistic: re-fetch; or do optimistic locally below
     try {
       await deleteHistoryItem(id);
+      onRefresh();
     } catch {
-      loadHistory();
+      onRefresh();
     }
   };
 
   const handleClearAll = async () => {
     if (!window.confirm('Clear all prediction history? This cannot be undone.')) return;
-    setHistory([]);
     try {
       await clearHistory(sessionId);
+      onRefresh();
     } catch {
-      loadHistory();
+      onRefresh();
     }
   };
 
-  if (loading) {
+  if (!history) {
     return <p className="muted-text">Loading history…</p>;
   }
 

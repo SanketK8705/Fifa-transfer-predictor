@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Stepper, { Step } from './Stepper.jsx';
 import StatSlider from './StatSlider.jsx';
 import Carousel from './Carousel.jsx';
@@ -40,14 +40,15 @@ const DEFAULT_FORM = {
   reactions: 65, shotpower: 65, stamina: 65, strength: 65, vision: 65,
 };
 
-export default function PredictPanel({ sessionId }) {
-  const [mode, setMode] = useState('famous'); // 'famous' | 'custom'
+export default function PredictPanel({ sessionId, onPredictSuccess }) {
+  const [mode, setMode] = useState('famous');
   const [famousPlayers, setFamousPlayers] = useState([]);
   const [positions, setPositions] = useState([]);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const resultRef = useRef(null);
 
   useEffect(() => {
     getFamousPlayers().then(setFamousPlayers).catch(() => {});
@@ -105,6 +106,10 @@ export default function PredictPanel({ sessionId }) {
         position: payload.position,
         age: payload.age,
         overall: payload.overall,
+      });
+      onPredictSuccess?.();
+      requestAnimationFrame(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     } catch (err) {
       setError(err?.response?.data?.error || 'Prediction failed. Check your inputs.');
@@ -223,39 +228,41 @@ export default function PredictPanel({ sessionId }) {
       {loading && <div className="loading-banner">Calculating prediction…</div>}
 
       {result && (
-        <BorderGlow
-          className="result-glow"
-          colors={['#00ff87', '#00cc6a', '#00ff87']}
-          backgroundColor="#0d1117"
-          borderRadius={18}
-        >
-          <div className="result-content">
-            <div className="result-player-name">{result.player_name}</div>
-            <div className="result-player-meta">
-              {result.position} · OVR {result.overall} · Age {result.age}
-            </div>
-            <div className="result-label">Predicted Market Value</div>
-            <div className="result-value">
-              <span className="result-currency">€</span>
-              <Counter value={result.value_m} fontSize={56} gradientHeight={6} />
-              <span className="result-suffix">M</span>
-            </div>
-            <div className={`result-category cat-${result.category?.toLowerCase()}`}>
-              {result.category} Tier
-            </div>
+        <div ref={resultRef}>
+          <BorderGlow
+            className="result-glow"
+            colors={['#00ff87', '#00cc6a', '#00ff87']}
+            backgroundColor="#0d1117"
+            borderRadius={18}
+          >
+            <div className="result-content">
+              <div className="result-player-name">{result.player_name}</div>
+              <div className="result-player-meta">
+                {result.position} · OVR {result.overall} · Age {result.age}
+              </div>
+              <div className="result-label">Predicted Market Value</div>
+              <div className="result-value">
+                <span className="result-currency">€</span>
+                <Counter value={result.value_m} fontSize={56} gradientHeight={6} />
+                <span className="result-suffix">M</span>
+              </div>
+              <div className={`result-category cat-${result.category?.toLowerCase()}`}>
+                {result.category} Tier
+              </div>
 
-            <div className="model-compare-cards">
-              {['lr', 'rf', 'gb'].map(key => (
-                <SpotlightCard key={key} className="model-card" spotlightColor="rgba(0,255,135,0.12)">
-                  <div className="model-card-label">
-                    {key === 'lr' ? 'Linear Regression' : key === 'rf' ? 'Random Forest' : 'Gradient Boosting'}
-                  </div>
-                  <div className="model-card-value">€{result.model_predictions[key]}M</div>
-                </SpotlightCard>
-              ))}
+              <div className="model-compare-cards">
+                {['lr', 'rf', 'gb'].map(key => (
+                  <SpotlightCard key={key} className="model-card" spotlightColor="rgba(0,255,135,0.12)">
+                    <div className="model-card-label">
+                      {key === 'lr' ? 'Linear Regression' : key === 'rf' ? 'Random Forest' : 'Gradient Boosting'}
+                    </div>
+                    <div className="model-card-value">€{result.model_predictions[key]}M</div>
+                  </SpotlightCard>
+                ))}
+              </div>
             </div>
-          </div>
-        </BorderGlow>
+          </BorderGlow>
+        </div>
       )}
     </div>
   );
