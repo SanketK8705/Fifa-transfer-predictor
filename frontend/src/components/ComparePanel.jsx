@@ -104,7 +104,7 @@ function PlayerPicker({ label, color, famousPlayers, positions, onConfirm }) {
               <button
                 onClick={() => { setSearch(''); setSearchResults([]); }}
                 style={{
-                  position: 'absolute', right: 8, top: '12px', display: 'flex', alignItems: 'center',
+                  position: 'absolute', right: 8, top: 'px', display: 'flex', alignItems: 'center',
                   background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0, lineHeight: 1
                 }}
                 aria-label="Clear"
