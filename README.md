@@ -1,103 +1,133 @@
- ⚽ FIFA Transfer Market Value Predictor
+# FIFAVAL — FIFA Transfer Value Predictor
 
-A full-stack Machine Learning web app that predicts the **transfer market value of football players** using multiple models trained on the FIFA 19 dataset.
+A full-stack machine learning web application that predicts football players' market transfer values using FIFA 19 dataset attributes. Built with Flask + React, deployed on Render and Vercel.
 
-🚀 Features
+🔗 **Live Demo:** [fifaval.vercel.app](https://fifa-transfer-predictor-frontend.vercel.app/)  
+📦 **Repo:** [github.com/SanketK8705/Fifa-transfer-predictor](https://github.com/SanketK8705/Fifa-transfer-predictor)
 
- Predict player market value using ML models
- Select **famous players** or enter **custom stats**
- 8+ dynamic visualizations for analysis
- Model comparison:
-    Linear Regression
-    Random Forest
-    Gradient Boosting (Best)
-    PCA-based dimensionality reduction
-    Classification into value categories (Low → Elite)
+---
 
-🖥️ Tech Stack
+## Features
 
-Frontend
-HTML, CSS, JavaScript
+- **Predict Tab** — Predict market value for any of 15 famous players or build a fully custom player using sliders across 21 attributes
+- **Search Tab** — Search any of 5,000+ players from the FIFA dataset; click to get an instant ML-predicted value
+- **Compare Tab** — Head-to-head comparison of two players with overlaid radar chart, stat-by-stat table with winner highlighting, and predicted value difference
+- **Analysis Tab** — PCA 2D scatter plot, classification metrics, regression scores, confusion matrix, and feature importance charts
+- **History Tab** — Session-scoped prediction history stored in SQLite via SQLAlchemy; supports delete and clear all
 
-Backend
-Python, Flask
+---
 
-ML & Data
-scikit-learn
-pandas, numpy
+## ML Models
 
-Visualization
-matplotlib, seaborn
+| Model | R² Score | MAE |
+|---|---|---|
+| Linear Regression | ~85% | ~€3.2M |
+| Random Forest | ~98% | ~€1.1M |
+| Gradient Boosting | **99.17%** | **~€0.8M** |
 
-📂 Project Structure
+- **PCA:** 21 features → 13 components, retaining 95.81% variance
+- **Classification:** Players categorized into Low / Medium / High / Elite tiers using Random Forest and Gradient Boosting classifiers
+- **Dataset:** FIFA 19 Kaggle dataset, 18,000+ players, filtered to ~5,000 with valid market values
+
+---
+
+## Tech Stack
+
+### Backend
+- Python 3, Flask, SQLAlchemy (SQLite)
+- Scikit-learn (Linear Regression, Random Forest, Gradient Boosting, PCA, Logistic Regression)
+- Pandas, NumPy
+- Deployed on **Render**
+
+### Frontend
+- React 18 + Vite
+- Recharts (radar chart, scatter plots, bar charts)
+- GSAP (animated nav, staggered menus)
+- Axios
+- Deployed on **Vercel**
+
+---
+
+## Project Structure
 
 ```
-├── app.py
-├── data.csv
-├── templates/
+Fifa-transfer-Project/
+├── app/
+│   ├── __init__.py          # Flask app factory
+│   ├── models.py            # SQLAlchemy Prediction model
+│   ├── ml/
+│   │   └── engine.py        # ML training, prediction, search, analysis
+│   └── routes/
+│       ├── predict.py       # POST /api/predict
+│       ├── players.py       # GET /api/players/famous, /search, /positions
+│       ├── history.py       # GET/DELETE /api/history
+│       └── analysis.py      # GET /api/analysis
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── api/client.js
+│   │   └── components/
+│   │       ├── PredictPanel.jsx
+│   │       ├── SearchPanel.jsx
+│   │       ├── ComparePanel.jsx
+│   │       ├── AnalysisPanel.jsx
+│   │       ├── HistoryPanel.jsx
+│   │       └── ...          # CardNav, Dock, StaggeredMenu, animations
 │   └── index.html
+├── data.csv                 # FIFA 19 dataset
+├── run.py
+└── vercel.json
 ```
 
-⚙️ How It Works
+---
 
-1. Loads and cleans dataset (currency, missing values) 
-2. Uses features like age, overall, skills, etc.
-3. Trains regression + classification models
-4. Applies PCA for dimensionality reduction
-5. Displays predictions + graphs on UI
+## Local Setup
 
-
-📊 Models
-
-| Model             | Purpose            |
-| ----------------- | ------------------ |
-| Linear Regression | Baseline           |
-| Random Forest     | Better accuracy    |
-| Gradient Boosting | ⭐ Best performance |
-
-
-▶️ Run Locally
-
+### Backend
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+cd Fifa-transfer-Project
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-python app.py
-```
-Open in browser:
-```
-http://127.0.0.1:5000
+python3 run.py
 ```
 
-📈 Visualizations
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-* Overall vs Value
-* Skill Radar
-* Similar Players
-* Age vs Value
-* Model Comparison
-* Feature Importance
-* Position vs Player
-* Value Distribution
+Set `baseURL` in `frontend/src/api/client.js` to `http://127.0.0.1:5000/api` for local development.
 
-📌 Dataset
+---
 
-* FIFA 19 dataset (~18,000 players)
+## API Endpoints
 
-💡 Learning Outcomes
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/predict` | Predict player market value |
+| GET | `/api/players/famous` | Get 15 famous players with full stats |
+| GET | `/api/players/search?q=` | Search dataset players (returns full stats) |
+| GET | `/api/players/positions` | Get all valid positions |
+| GET | `/api/analysis` | PCA, classification, regression analysis data |
+| GET | `/api/history?session_id=` | Get session prediction history |
+| DELETE | `/api/history/<id>` | Delete a prediction |
+| DELETE | `/api/history/clear` | Clear all session history |
 
-* End-to-end ML project
-* Regression vs Classification
-* PCA
-* Model evaluation (R², MAE, Kappa, MCC)
+---
 
-🔮 Future Improvements
+## Key Design Decisions
 
-* Deploy online
-* Add real-time data
-* Improve UI (React)
-* Add deep learning
+- **Session-scoped history** via UUID stored in localStorage — no auth required
+- **Keep-alive tab pattern** — panels stay mounted to avoid remount lag on tab switch
+- **Full stats on search** — `search_players` returns all 21 attributes so predictions are as accurate as the main predict flow
+- **Source tagging** — predictions tagged as `predict` / `search` / `compare` for history labeling
 
-👨‍💻 Author
+---
 
-Sanket Kumar Singh
+## Author
+
+**Sanket Kumar Singh**  
+[GitHub](https://github.com/SanketK8705)
