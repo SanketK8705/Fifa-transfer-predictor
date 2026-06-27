@@ -25,9 +25,16 @@ const TABS = [
     description: 'Head-to-head player stat & value comparison',
   },
   {
+    id: 'scout',
+    label: 'Scout AI',
+    bgColor: '#111827',
+    textColor: '#fff',
+    description: 'Ask tactical questions & transfer advice',
+  },
+  {
     id: 'analysis',
     label: 'Analysis',
-    bgColor: '#111827',
+    bgColor: '#0d1117',
     textColor: '#fff',
     description: 'PCA, classification & regression insights',
   },

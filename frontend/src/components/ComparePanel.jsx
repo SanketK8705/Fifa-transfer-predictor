@@ -92,21 +92,18 @@ function PlayerPicker({ label, color, famousPlayers, positions, onConfirm }) {
 
       {mode === 'famous' && (
         <>
-          <div style={{ position: 'relative' }}>
+          <div className="picker-search-wrap">
             <input
               className="picker-search"
               placeholder="Search any player from dataset…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ paddingRight: search ? '32px' : '12px' }}
             />
             {search && (
               <button
+                type="button"
+                className="picker-clear-btn"
                 onClick={() => { setSearch(''); setSearchResults([]); }}
-                style={{
-                  position: 'absolute', right: 8, top: 'px', display: 'flex', alignItems: 'center',
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0, lineHeight: 1
-                }}
                 aria-label="Clear"
               >
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">

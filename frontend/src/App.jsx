@@ -13,6 +13,7 @@ import SearchPanel from './components/SearchPanel.jsx';
 import AnalysisPanel from './components/AnalysisPanel.jsx';
 import HistoryPanel from './components/HistoryPanel.jsx';
 import ComparePanel from './components/ComparePanel.jsx';
+import AssistantPanel from './components/AssistantPanel.jsx';
 import { getHistory } from './api/client.js';
 import './App.css';
 
@@ -52,6 +53,11 @@ const CompareIcon = () => (
     <path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7" />
   </svg>
 );
+const ScoutIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
 
 const CLUB_BADGES = [
   { node: <span className="club-badge">Premier League</span> },
@@ -84,6 +90,7 @@ export default function App() {
     { icon: <PredictIcon />, label: 'Predict', onClick: () => setActiveTab('predict') },
     { icon: <SearchIcon />, label: 'Search', onClick: () => setActiveTab('search') },
     { icon: <CompareIcon />, label: 'Compare', onClick: () => setActiveTab('compare') },
+    { icon: <ScoutIcon />, label: 'Scout AI', onClick: () => setActiveTab('scout') },
     { icon: <ChartIcon />, label: 'Analysis', onClick: () => setActiveTab('analysis') },
     { icon: <HistoryIcon />, label: 'History', onClick: () => setActiveTab('history') },
   ];
@@ -92,6 +99,7 @@ export default function App() {
     { label: 'Predict', ariaLabel: 'Go to Predict tab', onClick: () => setActiveTab('predict') },
     { label: 'Search', ariaLabel: 'Go to Search tab', onClick: () => setActiveTab('search') },
     { label: 'Compare', ariaLabel: 'Go to Compare tab', onClick: () => setActiveTab('compare') },
+    { label: 'Scout AI', ariaLabel: 'Go to Scout AI tab', onClick: () => setActiveTab('scout') },
     { label: 'Analysis', ariaLabel: 'Go to Analysis tab', onClick: () => setActiveTab('analysis') },
     { label: 'History', ariaLabel: 'Go to History tab', onClick: () => setActiveTab('history') },
   ];
@@ -168,6 +176,11 @@ export default function App() {
           <div className={`tab-panel ${activeTab === 'compare' ? 'tab-panel--active' : ''}`}>
             <ScrollFloat containerClassName="section-header">Compare Players</ScrollFloat>
             <ComparePanel sessionId={sessionId} onPredictSuccess={loadHistory} />
+          </div>
+
+          <div className={`tab-panel ${activeTab === 'scout' ? 'tab-panel--active' : ''}`}>
+            <ScrollFloat containerClassName="section-header">Scout AI Assistant</ScrollFloat>
+            <AssistantPanel />
           </div>
 
           <div className={`tab-panel ${activeTab === 'analysis' ? 'tab-panel--active' : ''}`}>

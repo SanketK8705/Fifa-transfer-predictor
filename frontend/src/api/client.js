@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const isLocal = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 const api = axios.create({
-  baseURL: 'https://fifa-transfer-predictor.onrender.com/api',
+  baseURL: isLocal
+    ? 'http://localhost:5000/api'
+    : 'https://fifa-transfer-predictor.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -49,6 +54,11 @@ export async function deleteHistoryItem(predictionId) {
 export async function clearHistory(sessionId) {
   const { data } = await api.delete('/history/clear', { params: { session_id: sessionId } });
   return data;
+}
+
+export async function askAssistant(message) {
+  const { data } = await api.post('/assistant', { message });
+  return data.response;
 }
 
 export default api;
